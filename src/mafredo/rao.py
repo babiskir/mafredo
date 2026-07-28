@@ -236,9 +236,18 @@ class Rao:
         """
 
         # check that the data is consistent
-        assert len(omegas) == amplitude.shape[0], "Number of frequencies and amplitude data do not match"
-        assert len(directions) == amplitude.shape[1], "Number of headings and amplitude data do not match"
-        assert amplitude.shape == phase.shape, "Amplitude and phase data do not match"
+        if len(omegas) != amplitude.shape[0]:
+            raise ValueError(
+                f"Number of frequencies and amplitude data do not match: expected amplitude/phase shaped "
+                f"[iOmega, iDirection] = ({len(omegas)}, {len(directions)}), got {amplitude.shape}"
+            )
+        if len(directions) != amplitude.shape[1]:
+            raise ValueError(
+                f"Number of headings and amplitude data do not match: expected amplitude/phase shaped "
+                f"[iOmega, iDirection] = ({len(omegas)}, {len(directions)}), got {amplitude.shape}"
+            )
+        if amplitude.shape != phase.shape:
+            raise ValueError(f"Amplitude and phase data do not match: got shapes {amplitude.shape} and {phase.shape}")
 
         r = Rao()
 

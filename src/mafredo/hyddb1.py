@@ -858,14 +858,7 @@ class Hyddb1:
     def create_from_data(omega, added_mass, damping, directions, force_amps, force_phase_rad, phase_origin = None):
         """Creates a new database using the provided data.
 
-        Args:
-            omega : common omega vector [rad/s]
-            added_mass : added mass components : [iOmega, iRadating_dof, iInfluenced_dof]
-            damping    : damping components : [iOmega, iRadating_dof, iInfluenced_dof]
-            directions : wave directions for wave-forces [degrees, coming from]
-            force_amps : wave forces [iMode (0..5) , iDirection, iOmega]
-            force_phase_rad : wave force phase in rad [iMode (0..5) , iDirection, iOmega]
-            phase_origin : optional, phase origin [m,m]. Default (0,0)
+        See Also: set_data, for the meaning and layout of the arguments.
         """
 
         r = Hyddb1()
@@ -879,7 +872,9 @@ class Hyddb1:
             omega : common omega vector [rad/s]
             added_mass : added mass components : [iOmega, iRadating_dof, iInfluenced_dof]
             damping    : damping components : [iOmega, iRadating_dof, iInfluenced_dof]
-            directions : wave directions for wave-forces [degrees, coming from]
+            directions : wave directions for wave-forces [degrees, direction of wave propagation
+                         relative to the X-axis, e.g. heading 90 is propagation along the Y-axis.
+                         Same convention as Capytaine's wave_direction and Rao.wave_directions]
             force_amps : wave forces [iMode (0..5) , iOmega, iDirection]
             force_phase_rad : wave force phase in rad [iMode (0..5) , iOmega, iDirection]
             phase_origin : optional, phase origin [m,m]. Default (0,0)
@@ -920,6 +915,8 @@ class Hyddb1:
 
         if phase_origin is not None:
             self._phase_origin = tuple(phase_origin)
+
+        self._check_dimensions()  # raises ValueError if mass, damping and force are inconsistent
 
     def damping(self, omega):
         """Returns the damping xarray for given frequency or frequencies.
