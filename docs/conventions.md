@@ -61,3 +61,5 @@ pseudo code:
         response = np.real(motions)
         wave_elevation = wave_amplitude * np.real(time_phasor)
 ```
+
+Hyddb1 has a `phase_origin` property that can be used in database formats where the force origin is not identical to the phase origin. By default it is (0,0)  

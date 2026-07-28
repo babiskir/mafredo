@@ -78,6 +78,7 @@ class Hyddb1:
     .. method:: force
     .. method:: damping
     .. method:: amass
+    .. property:: phase origin
 
 
     Saving to file
@@ -135,6 +136,8 @@ class Hyddb1:
         self._kg_to_mt = 1 / 1000
         self._N_to_kN = 1 / 1000
 
+        self._phase_origin = (0,0)
+
     def __repr__(self):
         return (
             f"Hydrodynamic database with {self.n_frequencies} frequencies and {self.n_wave_directions} wave directions"
@@ -148,6 +151,7 @@ class Hyddb1:
         new._damping = self._damping.copy(deep=True)
         new._force = [rao.copy() for rao in self._force]
         new._symmetry = self._symmetry
+        new._phase_origin = self.phase_origin
         return new
 
     def _check_dimensions(self):
@@ -171,6 +175,15 @@ class Hyddb1:
                 raise ValueError(
                     f"Force RAO[{i}] has wrong shape, expected ({self.n_frequencies},{self.n_wave_directions}), got {values.shape}"
                 )
+
+    @property
+    def phase_origin(self):
+        """phase origin relative to the force application point [m,m].
+        For typical reference frames this is:
+        [0] is forward
+        [1] is to PS
+        """
+        return tuple(self._phase_origin)
 
     @property
     def n_frequencies(self):
@@ -269,6 +282,8 @@ class Hyddb1:
 
         info = xr.DataArray()
         info["symmetry"] = self.symmetry.value
+        info["phase_origin_0"] = self.phase_origin[0]
+        info["phase_origin_1"] = self.phase_origin[1]
         info.to_netcdf(filename, mode="a", group="info", engine=engine)
 
     def to_dict(self):
@@ -282,6 +297,7 @@ class Hyddb1:
             "damping": self._damping.to_dict(),
             "force": [rao.to_dict() for rao in self._force],
             "symmetry": self._symmetry.value,
+            "phase_origin": self.phase_origin,
             "modes": self._modes,
         }
         return data_dict
@@ -308,6 +324,10 @@ class Hyddb1:
 
         # Restore symmetry
         hyd._symmetry = Symmetry(data_dict["symmetry"])
+
+        # Restore phase origin (if present)
+        if "phase_origin" in data_dict:
+            hyd._phase_origin = data_dict["phase_origin"]
 
         # Restore modes if provided (for backward compatibility)
         if "modes" in data_dict:
@@ -338,8 +358,12 @@ class Hyddb1:
         # try read info
         try:
             with xr.open_dataset(filename, group="info", engine="h5netcdf") as ds:
+                if "phase_origin_0" in ds and "phase_origin_1" in ds:
+                    R._phase_origin = (float(ds["phase_origin_0"].values), float(ds["phase_origin_1"].values))
+
                 isym = ds["symmetry"]
                 R.symmetry = Symmetry(isym)
+
         except Exception:
             if R.n_wave_directions == 1:
                 R.symmetry = Symmetry.Circular
@@ -365,6 +389,8 @@ class Hyddb1:
             if np.any(R.wave_directions > 90):
                 if np.all(R.wave_directions <= 180):
                     warn("Symmetry is not present, but no headings exceeding 180 degrees were found")
+
+
 
         try:
             R._check_dimensions()  # self-check
@@ -829,7 +855,7 @@ class Hyddb1:
         self._damping = self._insert_6x6(self._damping, omega, m6x6)
 
     @staticmethod
-    def create_from_data(omega, added_mass, damping, directions, force_amps, force_phase_rad):
+    def create_from_data(omega, added_mass, damping, directions, force_amps, force_phase_rad, phase_origin = None):
         """Creates a new database using the provided data.
 
         Args:
@@ -839,13 +865,14 @@ class Hyddb1:
             directions : wave directions for wave-forces [degrees, coming from]
             force_amps : wave forces [iMode (0..5) , iDirection, iOmega]
             force_phase_rad : wave force phase in rad [iMode (0..5) , iDirection, iOmega]
+            phase_origin : optional, phase origin [m,m]. Default (0,0)
         """
 
         r = Hyddb1()
-        r.set_data(omega, added_mass, damping, directions, force_amps, force_phase_rad)
+        r.set_data(omega, added_mass, damping, directions, force_amps, force_phase_rad, phase_origin)
         return r
 
-    def set_data(self, omega, added_mass, damping, directions, force_amps, force_phase_rad):
+    def set_data(self, omega, added_mass, damping, directions, force_amps, force_phase_rad, phase_origin = None):
         """Sets all internal data for added mass, damping and wave-forces.
 
         Args:
@@ -855,6 +882,7 @@ class Hyddb1:
             directions : wave directions for wave-forces [degrees, coming from]
             force_amps : wave forces [iMode (0..5) , iOmega, iDirection]
             force_phase_rad : wave force phase in rad [iMode (0..5) , iOmega, iDirection]
+            phase_origin : optional, phase origin [m,m]. Default (0,0)
 
 
         See Also: create_from_data
@@ -889,6 +917,9 @@ class Hyddb1:
             rao = Rao.create_from_data(directions=directions, omegas=omega, amplitude=amps, phase=phases)
             rao.mode = MotionMode(iMode)
             self._force.append(rao)
+
+        if phase_origin is not None:
+            self._phase_origin = tuple(phase_origin)
 
     def damping(self, omega):
         """Returns the damping xarray for given frequency or frequencies.
