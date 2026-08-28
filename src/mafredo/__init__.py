@@ -1,6 +1,6 @@
 from importlib.metadata import PackageNotFoundError, version
 
-from mafredo.helpers import FrequencyUnit, MotionMode, Symmetry
+from mafredo.helpers import FrequencyUnit, MotionMode, Symmetry, show
 from mafredo.hyddb1 import Hyddb1
 from mafredo.rao import Rao
 
@@ -14,4 +14,4 @@ finally:
     del PackageNotFoundError, version
 
 
-__all__ = ["Hyddb1", "Symmetry", "Rao", "FrequencyUnit", "MotionMode"]
+__all__ = ["Hyddb1", "Symmetry", "Rao", "FrequencyUnit", "MotionMode", "show"]

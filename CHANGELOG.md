@@ -10,6 +10,11 @@ Plotting API cleaned up so figures can be embedded in a GUI (breaking):
 - `Rao.plot`, `plot_amplitude`, `plot_phase` and `plot_surface` create their
   own figure when no `ax` is given instead of drawing into pyplot's "current
   axes" (which could be a figure owned by someone else), and return the Axes.
+- All figures are now created with matplotlib's object-oriented API and are
+  unknown to pyplot: embedding them in a GUI has no side-effects and nothing
+  accumulates in pyplot's global registry. To display them interactively use
+  the new `mafredo.show(figs)`, which adopts them into pyplot;
+  `matplotlib.pyplot.show()` alone will not show them.
 - Fixed: `Rao.plot_surface` with a single wave-direction drew a line plot and
   then an image on top of it; it now falls back to the line plot only.
 - Fixed: `Rao.plot` labeled the y-axis "Amplitude" even when plotting phase,

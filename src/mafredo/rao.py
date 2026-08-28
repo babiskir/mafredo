@@ -548,9 +548,10 @@ class Rao:
 
         Args:
             what: "amplitude" or "phase"
-            ax: axes to plot in. A new figure is created when omitted; the
-                pyplot "current axes" are never used as those may belong to
-                a figure owned by someone else (e.g. embedded in a GUI).
+            ax: axes to plot in. When omitted a new figure is created with
+                the object-oriented API: it is unknown to pyplot (use
+                mafredo.show to display it) and the pyplot "current axes"
+                are never touched.
             unit: frequency unit for the x-axis
             xlim: upper limit for the frequency axis
 
@@ -558,9 +559,9 @@ class Rao:
             the matplotlib Axes plotted in
         """
         if ax is None:
-            import matplotlib.pyplot as plt
+            from matplotlib.figure import Figure
 
-            _, ax = plt.subplots()
+            ax = Figure().subplots()
 
         omega = self.omega
 
@@ -614,9 +615,9 @@ class Rao:
                 cmap = "hsv"  # cyclic colormap
 
         if ax is None:
-            import matplotlib.pyplot as plt
+            from matplotlib.figure import Figure
 
-            _, ax = plt.subplots()
+            ax = Figure().subplots()
 
         omega = self.omega
         unit_label, x = unit.to_unit(omega)

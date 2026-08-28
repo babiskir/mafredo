@@ -1173,10 +1173,10 @@ class Hyddb1:
             f.write("END\n")
 
     def _plot_amass_or_damping(self, data, ylab, unit: FrequencyUnit, xlim=None):
-        import matplotlib.pyplot as plt
+        from matplotlib.figure import Figure
 
-        fig, axes = plt.subplots(3, 2, figsize=(7, 7))
-        axes = axes.flatten()
+        fig = Figure(figsize=(7, 7))
+        axes = fig.subplots(3, 2).flatten()
 
         x_label, x = unit.to_unit(data.omega.values)
 
@@ -1233,9 +1233,10 @@ class Hyddb1:
     ):
         """Produces plots of the contents of the database.
 
-        The figures are returned and NOT shown: call matplotlib.pyplot.show()
-        yourself when running interactively, or embed the returned figures
-        in a GUI.
+        The figures are returned and NOT shown. They are created with the
+        object-oriented matplotlib API and are unknown to pyplot, so a GUI can
+        embed them without side-effects; plt.show() does not show them. Use
+        mafredo.show(figs) when running interactively.
 
         Args:
             adm: plot added mass
@@ -1250,7 +1251,7 @@ class Hyddb1:
             list of matplotlib Figures, one per requested plot
         """
 
-        import matplotlib.pyplot as plt
+        from matplotlib.figure import Figure
 
         figs = []
 
@@ -1265,8 +1266,8 @@ class Hyddb1:
         # --- RAO amplitudes
 
         if amp:
-            fig, axes = plt.subplots(3, 2, figsize=(7, 7))
-            axes = axes.flatten()
+            fig = Figure(figsize=(7, 7))
+            axes = fig.subplots(3, 2).flatten()
             for i in range(6):
                 force = self._force[i]
                 force.plot_amplitude(ax=axes[i], unit=unit, xlim=xlim)
@@ -1279,8 +1280,8 @@ class Hyddb1:
         # --- RAO phass
 
         if phase:
-            fig, axes = plt.subplots(3, 2, figsize=(7, 7))
-            axes = axes.flatten()
+            fig = Figure(figsize=(7, 7))
+            axes = fig.subplots(3, 2).flatten()
             for i in range(6):
                 force = self._force[i]
                 force.plot_surface("phase", ax=axes[i], unit=phase_unit)

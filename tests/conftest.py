@@ -21,9 +21,9 @@ def data_path() -> Path:
 def _close_figures():
     """Close all pyplot figures after each test.
 
-    The plot functions register their figures with pyplot and no longer show
-    (and thereby consume) them, so without this the registry fills up over
-    the test run.
+    mafredo's own figures are object-oriented and never enter pyplot, but
+    xarray's .plot() and mafredo.show() do register figures; this keeps the
+    registry empty between tests.
     """
     yield
     import matplotlib.pyplot as plt

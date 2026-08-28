@@ -11,7 +11,7 @@ using xarrays 'concat' method along the omega dimension.
 
 """
 
-from mafredo import Hyddb1
+from mafredo import Hyddb1, show
 
 try:
     # First create the object
@@ -24,7 +24,7 @@ try:
     cylinder.add(cylinder_further_refined)
 
     # and finally plot
-    cylinder.plot()
+    show(cylinder.plot())
 
 except Exception:
     pass  # read-the-docs

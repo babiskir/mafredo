@@ -255,5 +255,37 @@ def f10(number, tol=1e-12):
     raise ValueError(f"Can not convert number {number} to a string with length 10")
 
 
+def show(figs, block=None):
+    """Shows mafredo figures interactively.
+
+    mafredo creates its figures with matplotlib's object-oriented API, so they
+    are not registered with pyplot and plt.show() does not know about them.
+    This function adopts them into pyplot and then calls plt.show().
+
+    Args:
+        figs: a Figure, an Axes, or an iterable of those
+            (e.g. the return value of Hyddb1.plot or Rao.plot)
+        block: passed on to plt.show()
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+
+    if isinstance(figs, (Figure, Axes)):
+        figs = [figs]
+
+    for item in figs:
+        fig = item.figure if isinstance(item, Axes) else item
+        if getattr(fig.canvas, "manager", None) is not None:
+            continue  # already known to pyplot
+
+        # adopt: give the figure the window/manager of a fresh pyplot figure
+        manager = plt.figure().canvas.manager
+        manager.canvas.figure = fig
+        fig.set_canvas(manager.canvas)
+
+    plt.show(block=block)
+
+
 if __name__ == "__main__":
     pass
