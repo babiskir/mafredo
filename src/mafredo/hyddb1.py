@@ -1228,23 +1228,26 @@ class Hyddb1:
         damp=True,
         amp=True,
         phase=True,
-        do_show=True,
         unit=FrequencyUnit.rad_s,
-        xlim = None
+        xlim=None,
     ):
-        """Produces a plot of the contents of the database
+        """Produces plots of the contents of the database.
+
+        The figures are returned and NOT shown: call matplotlib.pyplot.show()
+        yourself when running interactively, or embed the returned figures
+        in a GUI.
 
         Args:
             adm: plot added mass
             damp: plot damping
             amp: plot force amplitudes
             phase: plot force phases
-            do_show : do plt.show()
+            unit: frequency unit for the x-axes
+            xlim: upper limit for the frequency axes
+                (defaults to 25 when unit is seconds)
 
         Returns:
-            figure handles
-
-
+            list of matplotlib Figures, one per requested plot
         """
 
         import matplotlib.pyplot as plt
@@ -1320,8 +1323,7 @@ class Hyddb1:
 
             f.tight_layout()
 
-        if do_show:
-            plt.show()
+        return figs
 
     def assert_allclose_to(self, other, atol=1, rtol=1e-3, atol_phase=1e-4):
         """Asserts that the two databases are equal"""

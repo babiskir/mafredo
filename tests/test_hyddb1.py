@@ -20,7 +20,8 @@ def test_check_dimensions(data_path):
 
 def test_load_dhyd(data_path):
     hyd = Hyddb1.create_from(data_path / "barge_100_30_4.dhyd")
-    hyd.plot()
+    figs = hyd.plot()
+    assert len(figs) == 4  # amplitude, phase, added mass, damping
 
     print(hyd._mass)
 
@@ -149,7 +150,8 @@ def test_add_damping():
 def test_read_hyd(data_path):
     hyd = Hyddb1.create_from_hyd(data_path / "barge.hyd")
 
-    hyd.plot(do_show=False)
+    figs = hyd.plot()
+    assert len(figs) == 4
 
 
 def test_interpolate_amass(data_path):

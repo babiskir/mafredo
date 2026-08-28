@@ -536,19 +536,31 @@ class Rao:
         return rao
 
     def plot_amplitude(self, ax=None, unit=FrequencyUnit.rad_s, xlim=None):
-        """Plots the amplitude"""
-        self.plot("amplitude", ax=ax, unit=unit, xlim=xlim)
+        """Plots the amplitude, see plot()"""
+        return self.plot("amplitude", ax=ax, unit=unit, xlim=xlim)
 
     def plot_phase(self, ax=None, unit=FrequencyUnit.rad_s, xlim=None):
-        """Plots the phase"""
-        self.plot("phase", ax=ax, unit=unit, xlim=xlim)
+        """Plots the phase, see plot()"""
+        return self.plot("phase", ax=ax, unit=unit, xlim=xlim)
 
     def plot(self, what="amplitude", ax=None, unit=FrequencyUnit.rad_s, xlim=None):
-        """Plots the amplitude"""
-        import matplotlib.pyplot as plt
+        """Plots amplitude or phase, one line per wave-direction.
 
+        Args:
+            what: "amplitude" or "phase"
+            ax: axes to plot in. A new figure is created when omitted; the
+                pyplot "current axes" are never used as those may belong to
+                a figure owned by someone else (e.g. embedded in a GUI).
+            unit: frequency unit for the x-axis
+            xlim: upper limit for the frequency axis
+
+        Returns:
+            the matplotlib Axes plotted in
+        """
         if ax is None:
-            ax = plt.gca()
+            import matplotlib.pyplot as plt
+
+            _, ax = plt.subplots()
 
         omega = self.omega
 
@@ -556,7 +568,7 @@ class Rao:
 
         headings = self._data["wave_direction"].values
 
-        for i, heading in enumerate(headings):
+        for heading in headings:
             data = self._data[what].sel(wave_direction=heading).values
             ax.plot(x, data, label=f"{heading}")
 
@@ -566,20 +578,34 @@ class Rao:
         if self.n_wave_directions > 1:
             ax.legend()
 
-        ax.legend()
-
-        ax.set_ylabel("Amplitude")
+        ax.set_ylabel("Amplitude" if what == "amplitude" else "Phase [rad]")
         ax.set_xlabel(f"Frequency [{unit_label}]")
         ax.grid()
 
-    def plot_surface(self, what="amplitude", ax=None, unit=FrequencyUnit.rad_s, cmap=None):
-        """Plots amplitude or phase as a surface plot"""
+        return ax
 
+    def plot_surface(self, what="amplitude", ax=None, unit=FrequencyUnit.rad_s, cmap=None):
+        """Plots amplitude or phase as a surface plot (heading vs frequency).
+
+        Falls back to a line plot when there is only a single wave-direction.
+
+        Args:
+            what: "amplitude" or "phase"
+            ax: axes to plot in. A new figure is created when omitted; the
+                pyplot "current axes" are never used, see plot().
+            unit: frequency unit for the y-axis (seconds not supported)
+            cmap: colormap; defaults to "Greys" for amplitude and the
+                cyclic "hsv" for phase
+
+        Returns:
+            the matplotlib Axes plotted in
+        """
         if unit == FrequencyUnit.seconds:
             raise ValueError("Frequency unit is seconds, this is not supported for surface plots")
 
         if self.n_wave_directions == 1:
-            self.plot(what=what, ax=ax, unit=unit)
+            # a surface plot needs at least two directions
+            return self.plot(what=what, ax=ax, unit=unit)
 
         if cmap is None:  # default colormaps
             if what == "amplitude":
@@ -587,10 +613,10 @@ class Rao:
             else:
                 cmap = "hsv"  # cyclic colormap
 
-        import matplotlib.pyplot as plt
-
         if ax is None:
-            ax = plt.gca()
+            import matplotlib.pyplot as plt
+
+            _, ax = plt.subplots()
 
         omega = self.omega
         unit_label, x = unit.to_unit(omega)
@@ -608,3 +634,5 @@ class Rao:
 
         ax.set_xlabel("Heading [deg]")
         ax.set_ylabel(f"Frequency [{unit_label}]")
+
+        return ax
