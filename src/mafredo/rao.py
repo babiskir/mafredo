@@ -535,15 +535,15 @@ class Rao:
 
         return rao
 
-    def plot_amplitude(self, ax=None, unit=FrequencyUnit.rad_s):
+    def plot_amplitude(self, ax=None, unit=FrequencyUnit.rad_s, xlim=None):
         """Plots the amplitude"""
-        self.plot("amplitude", ax=ax, unit=unit)
+        self.plot("amplitude", ax=ax, unit=unit, xlim=xlim)
 
-    def plot_phase(self, ax=None, unit=FrequencyUnit.rad_s):
+    def plot_phase(self, ax=None, unit=FrequencyUnit.rad_s, xlim=None):
         """Plots the phase"""
-        self.plot("phase", ax=ax, unit=unit)
+        self.plot("phase", ax=ax, unit=unit, xlim=xlim)
 
-    def plot(self, what="amplitude", ax=None, unit=FrequencyUnit.rad_s):
+    def plot(self, what="amplitude", ax=None, unit=FrequencyUnit.rad_s, xlim=None):
         """Plots the amplitude"""
         import matplotlib.pyplot as plt
 
@@ -560,6 +560,9 @@ class Rao:
             data = self._data[what].sel(wave_direction=heading).values
             ax.plot(x, data, label=f"{heading}")
 
+        if xlim is not None:
+            ax.set_xlim(0, xlim)
+
         if self.n_wave_directions > 1:
             ax.legend()
 
@@ -567,9 +570,13 @@ class Rao:
 
         ax.set_ylabel("Amplitude")
         ax.set_xlabel(f"Frequency [{unit_label}]")
+        ax.grid()
 
     def plot_surface(self, what="amplitude", ax=None, unit=FrequencyUnit.rad_s, cmap=None):
         """Plots amplitude or phase as a surface plot"""
+
+        if unit == FrequencyUnit.seconds:
+            raise ValueError("Frequency unit is seconds, this is not supported for surface plots")
 
         if self.n_wave_directions == 1:
             self.plot(what=what, ax=ax, unit=unit)

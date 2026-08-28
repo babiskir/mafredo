@@ -1172,13 +1172,13 @@ class Hyddb1:
             f.write(fixed_format("PARA2", [0, 0]))
             f.write("END\n")
 
-    def _plot_amass_or_damping(self, data, ylab, unit: FrequencyUnit):
+    def _plot_amass_or_damping(self, data, ylab, unit: FrequencyUnit, xlim=None):
         import matplotlib.pyplot as plt
 
-        fig, axes = plt.subplots(3, 2, figsize=(10, 15))
+        fig, axes = plt.subplots(3, 2, figsize=(7, 7))
         axes = axes.flatten()
 
-        x_label, x = unit.to_unit(self._mass.omega.values)
+        x_label, x = unit.to_unit(data.omega.values)
 
         for i in range(6):
             for other in range(6):
@@ -1187,9 +1187,10 @@ class Hyddb1:
                 else:
                     lw = 1
 
-                data = self._mass.sel(radiating_dof=i, influenced_dof=other).values
-
-                axes[i].plot(x, data, lw=lw, label=self._modes[other])
+                data_values = data.sel(radiating_dof=i, influenced_dof=other).values
+                axes[i].plot(x, data_values, lw=lw, label=self._modes[other])
+                if xlim is not None:
+                    axes[i].set_xlim(0, xlim)
 
             axes[i].set_title(self._modes[i])
             axes[i].set_xlabel(f"[{x_label}]")
@@ -1197,24 +1198,28 @@ class Hyddb1:
             if i == 5:
                 axes[i].legend()
 
+            axes[i].grid()
+
+
         return fig
 
-    def plot_added_mass(self, unit=FrequencyUnit.rad_s):
+    def plot_added_mass(self, unit=FrequencyUnit.rad_s, xlim=None):
         """Plots the added mass matrix"""
 
-        fig = self._plot_amass_or_damping(self._mass, "Added mass", unit)
+        fig = self._plot_amass_or_damping(self._mass, "Added mass", unit, xlim=xlim)
 
         fig.suptitle("Added mass\nDiagonal terms shown with thicker line")
+        fig.tight_layout()
 
         return fig
 
-    def plot_damping(self, unit=FrequencyUnit.rad_s):
+    def plot_damping(self, unit=FrequencyUnit.rad_s, xlim=None):
         """Plots the damping matrix"""
 
-        fig = self._plot_amass_or_damping(self._damping, "Damping", unit)
+        fig = self._plot_amass_or_damping(self._damping, "Damping", unit, xlim=xlim)
 
         fig.suptitle("Damping\nDiagonal terms shown with thicker line")
-
+        fig.tight_layout()
         return fig
 
     def plot(
@@ -1225,6 +1230,7 @@ class Hyddb1:
         phase=True,
         do_show=True,
         unit=FrequencyUnit.rad_s,
+        xlim = None
     ):
         """Produces a plot of the contents of the database
 
@@ -1245,43 +1251,74 @@ class Hyddb1:
 
         figs = []
 
+        if xlim is None:
+            if unit == FrequencyUnit.seconds:
+                xlim = 25
+
+        phase_unit = unit
+        if phase_unit == FrequencyUnit.seconds:
+            phase_unit = FrequencyUnit.Hz
+
         # --- RAO amplitudes
 
         if amp:
-            fig, axes = plt.subplots(3, 2, figsize=(10, 15))
+            fig, axes = plt.subplots(3, 2, figsize=(7, 7))
             axes = axes.flatten()
             for i in range(6):
                 force = self._force[i]
-                force.plot_amplitude(ax=axes[i], unit=unit)
+                force.plot_amplitude(ax=axes[i], unit=unit, xlim=xlim)
                 axes[i].set_title(self._modes[i])
             fig.suptitle("Force RAO amplitudes")
+
 
             figs.append(fig)
 
         # --- RAO phass
 
         if phase:
-            fig, axes = plt.subplots(3, 2, figsize=(10, 15))
+            fig, axes = plt.subplots(3, 2, figsize=(7, 7))
             axes = axes.flatten()
             for i in range(6):
                 force = self._force[i]
-                force.plot_surface("phase", ax=axes[i], unit=unit)
+                force.plot_surface("phase", ax=axes[i], unit=phase_unit)
                 axes[i].set_title(self._modes[i])
             fig.suptitle("Force RAO phase [rad]")
+
 
             figs.append(fig)
 
         # Added mass
 
         if adm:
-            fig = self.plot_added_mass(unit=unit)
+            fig = self.plot_added_mass(unit=unit, xlim=xlim)
             figs.append(fig)
 
         # Damping
 
         if damp:
-            fig = self.plot_damping(unit=unit)
+            fig = self.plot_damping(unit=unit, xlim=xlim)
             figs.append(fig)
+
+
+        # for all figs, set the font-size to something smaller
+        for f in figs:
+            for ax in f.get_axes():
+                ax.tick_params(labelsize=8)
+                ax.xaxis.label.set_size(8)
+                ax.yaxis.label.set_size(8)
+                ax.title.set_size(8)
+
+                # set size of legend entries
+                legend = ax.get_legend()
+                if legend is not None:
+                    for text in legend.get_texts():
+                        text.set_fontsize(6)
+
+            # set size of suptitle
+            if f._suptitle is not None:
+                f._suptitle.set_size(10)
+
+            f.tight_layout()
 
         if do_show:
             plt.show()
